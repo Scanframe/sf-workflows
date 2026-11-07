@@ -38,10 +38,10 @@ on:
         required: false
         default: >-
           {"include":[
-          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native","bin-dir":"bin/lnx64"},
-          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native","bin-dir":"bin/win64"},
-          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native","bin-dir":"bin/lnx64"},
-          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine --","bin-dir":"bin/win64"}
+          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
+          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/win64"},
+          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
+          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine -- native --verbose","bin-dir":"bin/win64"}
           ]}
       coverage:
         description: 'Run the coverage jobs for pull requests and manual runs'
@@ -51,21 +51,12 @@ on:
       release-branch:
         description: "Name of the release branch. Falls back to the variable 'SF_RELEASE_BRANCH' and then to 'main'"
         type: string
-        required: false
+        required: true
         default: ''
     secrets:
-      NEXUS_USER:
-        required: false
       NEXUS_PASSWORD:
-        required: false
-      NEXUS_SERVER_URL:
-        required: false
-      NEXUS_RAW_REPO:
-        required: false
-      NEXUS_EXCHANGE_REPO:
-        required: false
-      NEXUS_WINGET_REFRESH:
-        required: false
+        description: "Nexus account password for uploading packages."
+        required: true
 
 # Permissions needed by the jobs. A called workflow can not elevate beyond the permissions granted by the caller.
 permissions:
@@ -124,12 +115,14 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(inputs.matrix) }}
     env: &nexus-env
-      NEXUS_USER: ${{ secrets.NEXUS_USER }}
+      DEBUG: ${{ vars.ENTRY_DEBUG }}
+      NEXUS_USER: ${{ vars.NEXUS_USER }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-      NEXUS_SERVER_URL: ${{ secrets.NEXUS_SERVER_URL }}
-      NEXUS_RAW_REPO: ${{ secrets.NEXUS_RAW_REPO }}
-      NEXUS_EXCHANGE_REPO: ${{ secrets.NEXUS_EXCHANGE_REPO }}
-      NEXUS_WINGET_REFRESH: ${{ secrets.NEXUS_WINGET_REFRESH }}
+      NEXUS_SERVER_URL: ${{ vars.NEXUS_SERVER_URL }}
+      NEXUS_RAW_REPO: ${{ vars.NEXUS_RAW_REPO }}
+      NEXUS_RAW_SUBDIR: ${{ vars.NEXUS_RAW_SUBDIR }}
+      NEXUS_EXCHANGE_REPO: ${{ vars.NEXUS_EXCHANGE_REPO }}
+      NEXUS_WINGET_REFRESH: ${{ vars.NEXUS_WINGET_REFRESH }}
     steps:
       # The full history and tags are needed for versioning of shared libraries and packaging.
       - name: Checkout repository
