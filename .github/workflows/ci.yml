@@ -96,6 +96,9 @@ jobs:
           echo "Working Directory=$(pwd)"
           echo "Environment Dump"
           printenv | sort
+      - name: List project files
+        run: |
+          [[ "${DEBUG}" == "true" ]] && ls -Rla "$(pwd)/.."
       - name: Check code formatting
         run: |
           # Prevent error when fetching.
