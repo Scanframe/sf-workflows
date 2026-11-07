@@ -86,6 +86,8 @@ jobs:
     container: &build-container
       image: &build-image ${{ inputs.docker-image }}
       options: --privileged
+    env:
+      DEBUG: ${{ vars.ENTRY_DEBUG }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
