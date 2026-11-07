@@ -1,0 +1,278 @@
+# GitHub Actions reusable CI pipeline (called using 'workflow_call' from the workflow of a project).
+# Equivalent of the GitLab pipeline in 'gitlab-ci/main.gitlab-ci.yml' without the testing capabilities ('SF_SIGNAL').
+#
+# The triggers ('push', 'pull_request', 'workflow_dispatch') and the 'concurrency' belong in the calling workflow.
+# See 'README.md' in the '.github' directory for usage and a caller template.
+#
+# The composite actions are referenced using '<owner>/<central-repo>/.github/actions/<name>@v1' because a local
+# './.github/actions/...' path resolves in the workspace of the caller. Replace '<owner>/<central-repo>' with the
+# location of this repository and release this workflow and the actions together under the same tag.
+#
+# Repository settings of the calling repository used:
+#   Variables (optional):
+#     SF_RELEASE_BRANCH : Name of the branch allowing deployment to 'staging' and 'stable' (default: main).
+#   Secrets (repository or organization secrets, passed using 'secrets: inherit'):
+#     NEXUS_USER, NEXUS_PASSWORD, NEXUS_SERVER_URL, NEXUS_RAW_REPO, NEXUS_EXCHANGE_REPO, NEXUS_WINGET_REFRESH
+#   Environments: 'staging' and 'stable' which can override the secrets.
+
+name: CI
+
+on:
+  workflow_call:
+    inputs:
+      deploy:
+        description: "Manual deploy of the packages from the release branch: 'none', 'staging' or 'stable'"
+        type: string
+        required: false
+        default: 'none'
+      docker-image:
+        description: 'Docker image used to run the build and deploy jobs in'
+        type: string
+        required: false
+        default: 'nexus.scanframe.com/amd64/gnu-cpp:24.04-6.12.0'
+      matrix:
+        description: >-
+          JSON object with an 'include' list of toolchains to build. Each entry has the keys
+          'name', 'toolchain', 'build-cmd' and 'bin-dir'.
+        type: string
+        required: false
+        default: >-
+          {"include":[
+          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"./build.py native","bin-dir":"bin/lnx64"},
+          {"name":"linux-gw","toolchain":"gw","build-cmd":"./build.py native","bin-dir":"bin/win64"},
+          {"name":"linux-ga","toolchain":"ga","build-cmd":"./build.py native","bin-dir":"bin/lnx64"},
+          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"./build.py wine --","bin-dir":"bin/win64"}
+          ]}
+      coverage:
+        description: 'Run the coverage jobs for pull requests and manual runs'
+        type: boolean
+        required: false
+        default: true
+      release-branch:
+        description: "Name of the release branch. Falls back to the variable 'SF_RELEASE_BRANCH' and then to 'main'"
+        type: string
+        required: false
+        default: ''
+    secrets:
+      NEXUS_USER:
+        required: false
+      NEXUS_PASSWORD:
+        required: false
+      NEXUS_SERVER_URL:
+        required: false
+      NEXUS_RAW_REPO:
+        required: false
+      NEXUS_EXCHANGE_REPO:
+        required: false
+      NEXUS_WINGET_REFRESH:
+        required: false
+
+# Permissions needed by the jobs. A called workflow can not elevate beyond the permissions granted by the caller.
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SF_TARGET_ARCH: 'amd64'
+  SF_TARGET_OS: 'linux'
+  SF_DIR_PKG: 'bin/pkg'
+  SF_GCOVR_DIR: 'bin/gcov'
+
+jobs:
+
+  # ------------------------------------------------------------------
+  # check-env: Reports the environment and checks the code formatting.
+  # ------------------------------------------------------------------
+  check-env:
+    # Same as GitLab: pull requests, manual runs and pushes to protected branches only to prevent duplicate runs.
+    if: github.event_name != 'push' || github.ref_protected
+    # Anchors defined here are reused by the other jobs.
+    runs-on: &runs-on ubuntu-latest
+    timeout-minutes: &build-timeout 120
+    container: &build-container
+      image: &build-image ${{ inputs.docker-image }}
+      options: --privileged
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Print environment
+        run: |
+          echo "Working Directory=$(pwd)"
+          echo "Environment Dump"
+          printenv | sort
+      - name: Check code formatting
+        run: |
+          # Prevent error when fetching.
+          git config --global --add safe.directory '*'
+          if [[ -f check-format.sh ]]; then ./check-format.sh; fi
+
+  # ------------------------------------------------------------------
+  # build: Builds and packages every toolchain.
+  # ------------------------------------------------------------------
+  build:
+    name: ${{ matrix.name }}
+    needs: [check-env]
+    runs-on: *runs-on
+    timeout-minutes: *build-timeout
+    container: *build-container
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(inputs.matrix) }}
+    env: &nexus-env
+      NEXUS_USER: ${{ secrets.NEXUS_USER }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_SERVER_URL: ${{ secrets.NEXUS_SERVER_URL }}
+      NEXUS_RAW_REPO: ${{ secrets.NEXUS_RAW_REPO }}
+      NEXUS_EXCHANGE_REPO: ${{ secrets.NEXUS_EXCHANGE_REPO }}
+      NEXUS_WINGET_REFRESH: ${{ secrets.NEXUS_WINGET_REFRESH }}
+    steps:
+      # The full history and tags are needed for versioning of shared libraries and packaging.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Build
+        uses: <owner>/<central-repo>/.github/actions/build-job@v1
+        with:
+          job-name: ${{ matrix.name }}
+          build-cmd: ${{ matrix.build-cmd }} --workflow "${{ matrix.toolchain }}-release"
+          bin-dir: ${{ matrix.bin-dir }}
+          pkg-dir: ${{ env.SF_DIR_PKG }}
+
+  # ------------------------------------------------------------------
+  # linux-gcov: Coverage build using the GNU toolchain.
+  # Always runs for pull requests and manual runs otherwise it is skipped.
+  # ------------------------------------------------------------------
+  linux-gcov:
+    if: inputs.coverage && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+    needs: [check-env]
+    runs-on: *runs-on
+    timeout-minutes: *build-timeout
+    container: *build-container
+    env: *nexus-env
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Build coverage
+        uses: <owner>/<central-repo>/.github/actions/build-job@v1
+        with:
+          job-name: linux-gcov
+          build-cmd: ./build.py native --workflow "gnu-coverage"
+          upload-binaries: 'false'
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: ${{ env.SF_GCOVR_DIR }}/report.*
+          retention-days: 7
+          if-no-files-found: error
+
+  # ------------------------------------------------------------------
+  # report-coverage: Reports the coverage generated by the 'linux-gcov' job.
+  # ------------------------------------------------------------------
+  report-coverage:
+    needs: [linux-gcov]
+    if: inputs.coverage
+    runs-on: *runs-on
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-reports
+          path: ${{ env.SF_GCOVR_DIR }}
+      - name: Report coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          report="${SF_GCOVR_DIR}/report.txt"
+          if [[ ! -f "${report}" ]]; then
+            echo "No coverage report found."
+            exit 0
+          fi
+          # Output the report to the log and the job summary.
+          cat "${report}"
+          {
+            echo '### Coverage Report'
+            echo '```'
+            cat "${report}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+          # Add a comment to the pull request when permitted (not possible for forks).
+          if [[ -n "${PR_NUMBER}" ]]; then
+            {
+              echo '### Coverage Report'
+              echo '```'
+              cat "${report}"
+              echo '```'
+            } > comment.md
+            gh pr comment "${PR_NUMBER}" --body-file comment.md || echo "Could not add a comment to the pull request."
+          fi
+
+  # ------------------------------------------------------------------
+  # deploy-develop: Deploys automatically to Nexus for all but the release branch.
+  # ------------------------------------------------------------------
+  deploy-develop:
+    needs: [build]
+    if: >-
+      github.ref_name != (inputs.release-branch || vars.SF_RELEASE_BRANCH || 'main') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: *runs-on
+    timeout-minutes: &deploy-timeout 30
+    # Deploying does not need the privileged option.
+    container:
+      image: *build-image
+    env: *nexus-env
+    steps: &deploy-steps
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Deploy
+        uses: <owner>/<central-repo>/.github/actions/deploy-job@v1
+        with:
+          pkg-dir: ${{ env.SF_DIR_PKG }}
+
+  # ------------------------------------------------------------------
+  # deploy-staging: Manual deploy to Nexus from the release branch.
+  # Uses the secrets of the GitHub environment 'staging'.
+  # ------------------------------------------------------------------
+  deploy-staging:
+    needs: [build]
+    if: inputs.deploy == 'staging' && github.ref_name == (inputs.release-branch || vars.SF_RELEASE_BRANCH || 'main')
+    runs-on: *runs-on
+    timeout-minutes: *deploy-timeout
+    environment: staging
+    container:
+      image: *build-image
+    env: *nexus-env
+    steps: *deploy-steps
+
+  # ------------------------------------------------------------------
+  # deploy-stable: Manual deploy to Nexus from the release branch.
+  # Uses the secrets of the GitHub environment 'stable'.
+  # ------------------------------------------------------------------
+  deploy-stable:
+    needs: [build]
+    if: inputs.deploy == 'stable' && github.ref_name == (inputs.release-branch || vars.SF_RELEASE_BRANCH || 'main')
+    runs-on: *runs-on
+    timeout-minutes: *deploy-timeout
+    environment: stable
+    container:
+      image: *build-image
+    env: *nexus-env
+    steps: *deploy-steps

@@ -1,0 +1,89 @@
+# Composite action: Shared build job steps.
+# The repository must be checked out (with tags) before using this action.
+# Used by: build (matrix) and linux-gcov.
+
+name: 'Build Job'
+description: 'Validate tags, build and upload binaries and packages'
+
+inputs:
+  job-name:
+    description: 'Job name used as prefix for the artifact names (e.g. linux-gnu)'
+    required: true
+  build-cmd:
+    description: 'Complete build command (e.g. ./build.py native --workflow "gnu-release")'
+    required: true
+  bin-dir:
+    description: 'Binary output directory (e.g. bin/lnx64, bin/win64)'
+    required: false
+    default: ''
+  pkg-dir:
+    description: 'Directory containing the generated packages'
+    required: false
+    default: 'bin/pkg'
+  upload-binaries:
+    description: 'Set to "false" to skip uploading the binaries and packages'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Print environment
+      shell: bash
+      run: |
+        echo "Working Directory=$(pwd)"
+        echo "Environment Dump"
+        printenv | sort
+
+    - name: Fetch and validate git tags
+      shell: bash
+      run: |
+        # Prevent error when fetching.
+        git config --global --add safe.directory '*'
+        # Fetch all the tags.
+        git fetch --tags --force
+        # List the tags so they wind up in the log.
+        git tag --list
+        # The build needs tags for versioning of shared libraries and packaging.
+        if ! git describe --dirty; then
+          echo "Could not find tag describing this repo. Trying git unshallow..."
+          if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
+            git fetch --unshallow
+          fi
+          if ! git describe --dirty; then
+            echo "Could not git describe and is probably missing a version tag!"
+            exit 1
+          fi
+        fi
+
+    - name: Build
+      shell: bash
+      env:
+        BUILD_CMD: ${{ inputs.build-cmd }}
+      run: eval "${BUILD_CMD}"
+
+    - name: Upload binaries
+      if: inputs.upload-binaries == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.job-name }}-binaries
+        path: ${{ inputs.bin-dir }}/
+        retention-days: 7
+        if-no-files-found: warn
+
+    - name: Upload packages
+      if: inputs.upload-binaries == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.job-name }}-packages
+        path: |
+          ${{ inputs.pkg-dir }}/*.deb
+          ${{ inputs.pkg-dir }}/*.rpm
+          ${{ inputs.pkg-dir }}/*.exe
+          ${{ inputs.pkg-dir }}/*.zip
+          ${{ inputs.pkg-dir }}/*.zip-def
+          ${{ inputs.pkg-dir }}/*.tar.gz
+          ${{ inputs.pkg-dir }}/*.AppImage
+        retention-days: 7
+        if-no-files-found: ignore

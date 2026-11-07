@@ -1,0 +1,48 @@
+# Composite action: Shared deploy job steps.
+# The repository must be checked out before using this action.
+# Used by: deploy-develop, deploy-staging, deploy-stable.
+# The Nexus target depends on the secrets passed as environment variables by the calling job.
+
+name: 'Deploy Job'
+description: 'Download the package artifacts and publish them to Nexus'
+
+inputs:
+  pkg-dir:
+    description: 'Directory the packages are downloaded to and published from'
+    required: false
+    default: 'bin/pkg'
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Print environment
+      shell: bash
+      run: |
+        echo "Working Directory=$(pwd)"
+        echo "Environment Dump"
+        printenv | sort
+
+    # Only the packages are needed and are merged into a single directory.
+    - name: Download package artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-packages'
+        merge-multiple: true
+        path: ${{ inputs.pkg-dir }}
+
+    - name: Publish to Nexus
+      shell: bash
+      env:
+        PKG_DIR: ${{ inputs.pkg-dir }}
+      run: |
+        git config --global --add safe.directory '*'
+        ls -l "${PKG_DIR}"
+        ./build.py --verbose publish \
+          "${PKG_DIR}/*.deb" \
+          "${PKG_DIR}/*.exe" \
+          "${PKG_DIR}/*.zip" \
+          "${PKG_DIR}/*.zip-def" \
+          "${PKG_DIR}/*.tar.gz" \
+          "${PKG_DIR}/*.rpm" \
+          "${PKG_DIR}/*.AppImage"
