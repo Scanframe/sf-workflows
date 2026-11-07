@@ -98,7 +98,7 @@ jobs:
           printenv | sort
       - name: List project files
         run: |
-          [[ "${DEBUG}" == "true" ]] && ls -Rla "$(pwd)/.."
+          if [[ -n "${DEBUG}" ]]; then ls -Rla "$(pwd)/.."; fi
       - name: Check code formatting
         run: |
           # Prevent error when fetching.
