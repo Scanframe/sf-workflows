@@ -1,4 +1,6 @@
-# Central GitHub Actions CI
+# Central CI-Pipeline Configurations
+
+## GitHub Actions CI
 
 This directory holds a reusable GitHub Actions pipeline that can be called from many projects.
 
@@ -8,7 +10,7 @@ This directory holds a reusable GitHub Actions pipeline that can be called from 
 Each project only needs a small caller workflow.
 The pipeline is the equivalent of the GitLab pipeline in `gitlab-ci/` without the `SF_SIGNAL` testing capabilities.
 
-## Jobs
+### Jobs
 
 | Job              | Description                                                                          |
 |------------------|--------------------------------------------------------------------------------------|
@@ -20,9 +22,9 @@ The pipeline is the equivalent of the GitLab pipeline in `gitlab-ci/` without th
 | `deploy-staging` | Manual deploy from the release branch (environment `staging`).                       |
 | `deploy-stable`  | Manual deploy from the release branch (environment `stable`).                        |
 
-## Using it in a project
+### Using it in a project
 
-### 1. Project requirements
+#### 1. Project requirements
 
 The pipeline relies on this contract in the calling project:
 
@@ -32,7 +34,7 @@ The pipeline relies on this contract in the calling project:
 - Git version tags, since the build runs `git describe`. The build jobs check out the full history including tags.
 - Build output in `bin/pkg` (packages) and `bin/gcov` (coverage `report.*`) and binaries in the `bin-dir` of the matrix.
 
-### 2. Caller workflow
+#### 2. Caller workflow
 
 Add `.github/workflows/ci.yml` to the project. Replace `<owner>/<central-repo>` with the location of this repository.
 
@@ -71,7 +73,7 @@ jobs:
 
 The triggers, the `deploy` choice input and `concurrency` live in the caller, because only the triggers of the caller start a run.
 
-### 3. Optional inputs
+#### 3. Optional inputs
 
 All inputs have defaults reproducing the standard pipeline, so overriding them is optional.
 
@@ -98,7 +100,7 @@ Example overriding the matrix and disabling coverage:
 Each matrix entry needs the keys `name`, `toolchain`, `build-cmd` and `bin-dir`.
 The build command executed is `<build-cmd> --workflow "<toolchain>-release"`.
 
-### 4. Secrets, variables and environments
+#### 4. Secrets, variables and environments
 
 Configure these in the calling repository or on organization level (organization secrets avoid repeating them per project):
 
@@ -108,14 +110,14 @@ Configure these in the calling repository or on organization level (organization
 - **Environments**: `staging` and `stable`. Environment secrets override the repository secrets when the Nexus targets differ.
   Required reviewers on an environment give an approval step before a deploy.
 
-### 5. Container image and runners
+#### 5. Container image and runners
 
 The jobs run in the container image from the `docker-image` input, which by default is hosted on the Nexus server.
 The image must be pullable from the runner executing the project's jobs.
 Use a self-hosted runner that can reach the registry, or pick a public image using `docker-image`.
 The build jobs run with `--privileged`.
 
-## Versioning
+### Versioning
 
 The workflow references the composite actions with a tag: `<owner>/<central-repo>/.github/actions/<name>@v1`.
 A `uses:` path can not be dynamic, so the version is fixed in `workflows/ci.yml`.
@@ -132,9 +134,14 @@ A `uses:` path can not be dynamic, so the version is fixed in `workflows/ci.yml`
   Projects switch when they change their caller to `@v2`.
 - When testing a branch, temporarily change the action references in `workflows/ci.yml` and the caller to the branch name.
 
-## Notes
+### Notes
 
 - This repository can not run the workflow itself without a caller. Test using a project calling it.
 - Pull requests from forks have no access to secrets. Deploys are skipped for them.
 - YAML anchors in `workflows/ci.yml` only work within that file. GitHub supports anchors since September 2025,
   so older GitHub Enterprise Server versions may reject the file.
+
+
+### GitLab CI-pipelines
+
+> Readme needs implementation.
