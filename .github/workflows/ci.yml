@@ -4,7 +4,7 @@
 # The triggers ('push', 'pull_request', 'workflow_dispatch') and the 'concurrency' belong in the calling workflow.
 # See 'README.md' in the '.github' directory for usage and a caller template.
 #
-# The composite actions are referenced using '<owner>/<central-repo>/.github/actions/<name>@v1' because a local
+# The composite actions are referenced using '<owner>/<central-repo>/.github/actions/<name>@main' because a local
 # './.github/actions/...' path resolves in the workspace of the caller. Replace '<owner>/<central-repo>' with the
 # location of this repository and release this workflow and the actions together under the same tag.
 #
@@ -138,7 +138,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Build
-        uses: Scanframe/sf-workflows/.github/actions/build-job@v1
+        uses: Scanframe/sf-workflows/.github/actions/build-job@main
         with:
           job-name: ${{ matrix.name }}
           build-cmd: ${{ matrix.build-cmd }} --workflow "${{ matrix.toolchain }}-release"
@@ -163,7 +163,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Build coverage
-        uses: Scanframe/sf-workflows/.github/actions/build-job@v1
+        uses: Scanframe/sf-workflows/.github/actions/build-job@main
         with:
           job-name: linux-gcov
           build-cmd: ./build.py native --workflow "gnu-coverage"
@@ -243,7 +243,7 @@ jobs:
         with:
           submodules: recursive
       - name: Deploy
-        uses: Scanframe/sf-workflows/.github/actions/deploy-job@v1
+        uses: Scanframe/sf-workflows/.github/actions/deploy-job@main
         with:
           pkg-dir: ${{ env.SF_DIR_PKG }}
 
