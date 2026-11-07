@@ -10,7 +10,7 @@ inputs:
     description: 'Job name used as prefix for the artifact names (e.g. linux-gnu)'
     required: true
   build-cmd:
-    description: 'Complete build command (e.g. ./build.py native --workflow "gnu-release")'
+    description: 'Complete build command (e.g. /home/user/bin/entrypoint.sh ./build.py native --workflow "gnu-release")'
     required: true
   bin-dir:
     description: 'Binary output directory (e.g. bin/lnx64, bin/win64)'

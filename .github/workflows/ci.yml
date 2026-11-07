@@ -38,10 +38,10 @@ on:
         required: false
         default: >-
           {"include":[
-          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"./build.py native","bin-dir":"bin/lnx64"},
-          {"name":"linux-gw","toolchain":"gw","build-cmd":"./build.py native","bin-dir":"bin/win64"},
-          {"name":"linux-ga","toolchain":"ga","build-cmd":"./build.py native","bin-dir":"bin/lnx64"},
-          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"./build.py wine --","bin-dir":"bin/win64"}
+          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native","bin-dir":"bin/lnx64"},
+          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native","bin-dir":"bin/win64"},
+          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native","bin-dir":"bin/lnx64"},
+          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine --","bin-dir":"bin/win64"}
           ]}
       coverage:
         description: 'Run the coverage jobs for pull requests and manual runs'
@@ -166,7 +166,7 @@ jobs:
         uses: Scanframe/sf-workflows/.github/actions/build-job@main
         with:
           job-name: linux-gcov
-          build-cmd: ./build.py native --workflow "gnu-coverage"
+          build-cmd: /home/user/bin/entrypoint.sh ./build.py native --workflow "gnu-coverage"
           upload-binaries: 'false'
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
