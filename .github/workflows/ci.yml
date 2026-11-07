@@ -100,7 +100,7 @@ jobs:
           printenv | sort
       - name: List project files
         run: |
-          if [[ -n "${DEBUG}" ]]; then ls -Rla "$(pwd)/.."; fi
+          ls -Rla "$(pwd)/.."
       - name: Check code formatting
         run: |
           # Prevent error when fetching.
