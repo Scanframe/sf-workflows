@@ -28,8 +28,7 @@ on:
       docker-image:
         description: 'Docker image used to run the build and deploy jobs in'
         type: string
-        required: false
-        default: 'nexus.scanframe.com/amd64/gnu-cpp:24.04-6.12.0'
+        required: true
       matrix:
         description: >-
           JSON object with an 'include' list of toolchains to build. Each entry has the keys
@@ -162,11 +161,26 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - name: Prepare output directories for the build user
+        shell: bash
+        run: |
+          for dir in "${SF_GCOVR_DIR}" "${SF_DIR_PKG}" ; do
+          [[ -z "${dir}" ]] && continue
+          mkdir -p "${dir}"
+          # Open the directory and all its existing subdirectories.
+          find "${dir}" -type d -exec chmod 777 {} +
+          # Open the parent directories up to the workspace root (e.g. 'bin').
+          parent="$(dirname "${dir}")"
+          while [[ "${parent}" != "." && "${parent}" != "/" ]]; do
+           chmod 777 "${parent}"
+           parent="$(dirname "${parent}")"
+          done
+          done
       - name: Build coverage
         uses: Scanframe/sf-workflows/.github/actions/build-job@main
         with:
           job-name: linux-gcov
-          build-cmd: /home/user/bin/entrypoint.sh ./build.py native --workflow "gnu-coverage"
+          build-cmd: /home/user/bin/entrypoint.sh ./build.py native --verbose --workflow "gnu-coverage"
           upload-binaries: 'false'
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
