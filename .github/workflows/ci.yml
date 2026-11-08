@@ -48,11 +48,6 @@ on:
         type: boolean
         required: false
         default: true
-      release-branch:
-        description: "Name of the release branch. Falls back to the variable 'SF_RELEASE_BRANCH' and then to 'main'"
-        type: string
-        required: true
-        default: ''
     secrets:
       NEXUS_PASSWORD:
         description: "Nexus account password for uploading packages."
@@ -227,7 +222,7 @@ jobs:
   deploy-develop:
     needs: [build]
     if: >-
-      github.ref_name != (inputs.release-branch || vars.SF_RELEASE_BRANCH || 'main') &&
+      github.ref_name != (vars.SF_RELEASE_BRANCH || 'main') &&
       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: *runs-on
     timeout-minutes: &deploy-timeout 30
@@ -251,7 +246,7 @@ jobs:
   # ------------------------------------------------------------------
   deploy-staging:
     needs: [build]
-    if: inputs.deploy == 'staging' && github.ref_name == (inputs.release-branch || vars.SF_RELEASE_BRANCH || 'main')
+    if: inputs.deploy == 'staging' && github.ref_name == (vars.SF_RELEASE_BRANCH || 'main')
     runs-on: *runs-on
     timeout-minutes: *deploy-timeout
     environment: staging
@@ -266,7 +261,7 @@ jobs:
   # ------------------------------------------------------------------
   deploy-stable:
     needs: [build]
-    if: inputs.deploy == 'stable' && github.ref_name == (inputs.release-branch || vars.SF_RELEASE_BRANCH || 'main')
+    if: inputs.deploy == 'stable' && github.ref_name == (vars.SF_RELEASE_BRANCH || 'main')
     runs-on: *runs-on
     timeout-minutes: *deploy-timeout
     environment: stable
