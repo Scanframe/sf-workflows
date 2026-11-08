@@ -38,7 +38,7 @@ runs:
       run: |
         git config --global --add safe.directory '*'
         ls -l "${PKG_DIR}"
-        ./build.py --verbose publish \
+        ./build.py publish --verbose \
           "${PKG_DIR}/*.deb" \
           "${PKG_DIR}/*.exe" \
           "${PKG_DIR}/*.zip" \
