@@ -107,7 +107,14 @@ jobs:
   # ------------------------------------------------------------------
   build:
     name: ${{ matrix.name }}
-    needs: [check-env]
+    needs: [check-env, linux-gcov]
+    # Run when check-env passed and linux-gcov either succeeded or was skipped (push, coverage disabled).
+    # '!cancelled()' is required: without a status function the implicit 'success()' skips this job
+    # whenever linux-gcov was skipped.
+    if: >-
+      ${{ !cancelled()
+      && needs.check-env.result == 'success'
+      && (needs.linux-gcov.result == 'success' || needs.linux-gcov.result == 'skipped') }}
     runs-on: *runs-on
     timeout-minutes: *build-timeout
     container: *build-container
