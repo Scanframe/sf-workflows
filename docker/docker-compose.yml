@@ -6,8 +6,7 @@ services:
     # Only affects the runner container: job containers ('container:') are started by the host Docker daemon
     # on a network the runner creates per job.
     network_mode: host
-    restart: no
-    #restart: unless-stopped
+    restart: unless-stopped
     environment:
       # Place sensitive values in a .env file next to this compose file.
       # Use RUNNER_TOKEN (manually generated from GitHub UI) instead of ACCESS_TOKEN.

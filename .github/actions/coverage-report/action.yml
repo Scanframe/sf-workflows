@@ -38,8 +38,7 @@ runs:
         GCOVR_DIR: ${{ inputs.gcovr-dir }}
         EXCHANGE_DIR: ${{ inputs.exchange-dir }}
       run: |
-        git config --global --add safe.directory '*'
-        ./build.py --verbose publish --exchange "${EXCHANGE_DIR}" "${GCOVR_DIR}/report".*
+        ./build.py publish --verbose --exchange "${EXCHANGE_DIR}" "${GCOVR_DIR}/report".*
 
     - name: Report coverage
       shell: bash
