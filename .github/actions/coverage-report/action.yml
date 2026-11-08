@@ -54,14 +54,15 @@ runs:
         # Output the text report to the log and the job summary.
         if [[ -f "${report}" ]]; then
           cat "${report}"
-          printf '### Coverage Report\n```\n%s\n```\n' "$(cat "${report}")" >> "${GITHUB_STEP_SUMMARY}"
+          echo "### Coverage Report" >> "${GITHUB_STEP_SUMMARY}"
+          # Create also an annotation having the report which is visible even when not logged in to GitHub.
+          echo "::notice::Coverage detailed report: ${report_url}"
+          # Link to the HTML report on Nexus in the job summary.
+          echo "[Coverage detailed report](${report_url})" >> "${GITHUB_STEP_SUMMARY}"
+          printf '\n```\n%s\n```\n' "$(cat "${report}")" >> "${GITHUB_STEP_SUMMARY}"
         else
           echo "No coverage report found at '${report}'."
         fi
-        # Create also an annotation having the report which is visible even when not logged in to GitHub.
-        echo "::notice::Coverage detailed report: ${report_url}"
-        # Link to the HTML report on Nexus in the job summary.
-        echo "[Coverage detailed report](${report_url})" >> "${GITHUB_STEP_SUMMARY}"
         # Add a comment to the pull request when permitted (not possible for forks).
         if [[ -z "${PR_NUMBER}" ]]; then
           echo "Not adding comment, not a pull request."
