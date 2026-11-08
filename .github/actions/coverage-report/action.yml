@@ -58,6 +58,8 @@ runs:
         else
           echo "No coverage report found at '${report}'."
         fi
+        # Create also an annotation having the report which is visible even when not logged in to GitHub.
+        echo "::notice::Coverage detailed report: ${report_url}"
         # Link to the HTML report on Nexus in the job summary.
         echo "[Coverage detailed report](${report_url})" >> "${GITHUB_STEP_SUMMARY}"
         # Add a comment to the pull request when permitted (not possible for forks).

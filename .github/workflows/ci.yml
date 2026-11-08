@@ -129,6 +129,7 @@ jobs:
       NEXUS_USER: ${{ vars.NEXUS_USER }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
       NEXUS_SERVER_URL: ${{ vars.NEXUS_SERVER_URL }}
+      NEXUS_APT_REPO: ${{ vars.NEXUS_APT_REPO }}
       NEXUS_RAW_REPO: ${{ vars.NEXUS_RAW_REPO }}
       NEXUS_RAW_SUBDIR: ${{ vars.NEXUS_RAW_SUBDIR }}
       NEXUS_EXCHANGE_REPO: ${{ vars.NEXUS_EXCHANGE_REPO }}
