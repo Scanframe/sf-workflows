@@ -137,6 +137,40 @@ docker compose logs --since 1h runner
    The runner `sf-build-01` should show as **Online** with a green dot.
 3. **Job history**: View completed and in-progress jobs on the same page under the runner list.
 
+## Container jobs (`container:` in a workflow)
+
+The runner uses the host Docker daemon through the socket. For jobs with `container:` the runner mounts its
+`externals` directory (with `node24`) into the job container as `/__e`. The daemon resolves that path on the
+**host**, so it must exist there. Otherwise `actions/checkout` fails with
+`exec: "/__e/node24/bin/node": no such file or directory`.
+
+Populate the host directory once (and again after updating the runner image):
+
+```bash
+sudo mkdir -p /actions-runner
+id=$(docker create myoung34/github-runner:latest)
+sudo rm -rf /actions-runner/externals
+sudo docker cp "$id":/actions-runner/externals /actions-runner/externals
+docker rm "$id"
+docker compose up -d --force-recreate
+```
+
+The compose file bind mounts `/actions-runner/externals` at the identical path, because the host daemon resolves the
+source path the runner reports (its own `/actions-runner/externals`) on the host.
+
+## Non-root runner (`RUN_AS_ROOT: "false"`)
+
+The runner process runs as user `runner` (uid 1001), the same as the GitHub-hosted runners. The workspace is then
+owned by uid 1001 instead of root. The build image entrypoint takes the build user uid:gid from the workspace owner
+and fails with `usermod: UID '0' already exists` when the workspace is owned by root.
+
+When switching from a root runner, remove the root-owned work directory on the host once:
+
+```bash
+sudo rm -rf /tmp/runner/work
+docker compose up -d --force-recreate
+```
+
 ## Token Expiration
 
 The runner registration token from GitHub expires after 1 hour. With `EPHEMERAL: true` (default),

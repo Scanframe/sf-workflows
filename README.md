@@ -16,8 +16,7 @@ The pipeline is the equivalent of the GitLab pipeline in `gitlab-ci/` without th
 |------------------|--------------------------------------------------------------------------------------|
 | `check-env`      | Prints the environment and runs `check-format.sh` when present.                      |
 | `build`          | Matrix job building and packaging every toolchain (default: gnu, gw, ga and msvc).   |
-| `linux-gcov`     | Coverage build (`gnu-coverage`) for pull requests and manual runs.                   |
-| `report-coverage`| Writes the coverage report to the job summary and comments on same-repo PRs.         |
+| `linux-gcov`     | Coverage build (`gnu-coverage`) for PRs and manual runs. Publishes the report to the Nexus exchange repo, writes `report.txt` to the job summary and comments a link to the report on same-repo PRs. |
 | `deploy-develop` | Automatic deploy to Nexus for every branch except the release branch.                |
 | `deploy-staging` | Manual deploy from the release branch (environment `staging`).                       |
 | `deploy-stable`  | Manual deploy from the release branch (environment `stable`).                        |
@@ -82,7 +81,7 @@ All inputs have defaults reproducing the standard pipeline, so overriding them i
 | `deploy`         | string  | `none`                                           | `none`, `staging` or `stable`. Manual deploy from the release branch.      |
 | `docker-image`   | string  | `nexus.scanframe.com/amd64/gnu-cpp:24.04-6.12.0` | Container image the jobs run in.                                           |
 | `matrix`         | string  | gnu, gw, ga and msvc                             | JSON object with an `include` list of toolchains.                          |
-| `coverage`       | boolean | `true`                                           | Enables the `linux-gcov` and `report-coverage` jobs.                       |
+| `coverage`       | boolean | `true`                                           | Enables the `linux-gcov` job.                                              |
 | `release-branch` | string  | empty                                            | Release branch. Falls back to variable `SF_RELEASE_BRANCH`, then `main`.   |
 
 Example overriding the matrix and disabling coverage:
