@@ -75,8 +75,9 @@ jobs:
     # Same as GitLab: pull requests, manual runs and pushes to protected branches only to prevent duplicate runs.
     if: github.event_name != 'push' || github.ref_protected
     # Anchors defined here are reused by the other jobs.
-    # Uses the self-hosted runner (sf-build) when available, falls back to GitHub-hosted.
-    runs-on: &runs-on [sf-build, ubuntu-latest]
+    # A 'runs-on' list needs a runner having ALL labels, it is not a fallback list.
+    # Set variable SF_RUNNER_LABELS (JSON) to use the self-hosted runner, e.g. ["sf-build"]. Default: GitHub-hosted.
+    runs-on: &runs-on ${{ fromJSON(vars.SF_RUNNER_LABELS || '["ubuntu-latest"]') }}
     timeout-minutes: &build-timeout 120
     container: &build-container
       image: &build-image ${{ inputs.docker-image }}
