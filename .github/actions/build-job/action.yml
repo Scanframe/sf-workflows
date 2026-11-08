@@ -57,6 +57,25 @@ runs:
           fi
         fi
 
+    - name: Prepare output directories for the build user
+      shell: bash
+      env:
+        BIN_DIR: ${{ inputs.bin-dir }}
+        PKG_DIR: ${{ inputs.pkg-dir }}
+      run: |
+        for dir in "${BIN_DIR}" "${PKG_DIR}"; do
+          [[ -z "${dir}" ]] && continue
+          mkdir -p "${dir}"
+          # Open the directory and all its existing subdirectories.
+          find "${dir}" -type d -exec chmod 777 {} +
+          # Open the parent directories up to the workspace root (e.g. 'bin').
+          parent="$(dirname "${dir}")"
+          while [[ "${parent}" != "." && "${parent}" != "/" ]]; do
+            chmod 777 "${parent}"
+            parent="$(dirname "${parent}")"
+          done
+        done
+
     - name: Build
       shell: bash
       env:

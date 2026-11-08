@@ -130,8 +130,6 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-      - name: Make directories writable
-        run: find "${GITHUB_WORKSPACE}" -type d -not -path '*/.git' -not -path '*/.git/*' -exec chmod 777 {} +
       - name: Build
         uses: Scanframe/sf-workflows/.github/actions/build-job@main
         with:
