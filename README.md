@@ -117,6 +117,10 @@ The image must be pullable from the runner executing the project's jobs.
 Use a self-hosted runner that can reach the registry, or pick a public image using `docker-image`.
 The build jobs run with `--privileged`.
 
+The workflow uses `runs-on: [sf-build, ubuntu-latest]`, so it automatically prefers the self-hosted runner
+(label `sf-build`) when available and falls back to the GitHub-hosted `ubuntu-latest` runner otherwise.
+Set up the self-hosted runner using the Docker Compose configuration in `docker/`.
+
 ### Versioning
 
 The workflow references the composite actions with a tag: `<owner>/<central-repo>/.github/actions/<name>@v1`.

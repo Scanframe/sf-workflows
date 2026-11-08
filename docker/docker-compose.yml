@@ -1,0 +1,38 @@
+services:
+  runner:
+    image: myoung34/github-runner:latest
+    privileged: true
+    restart: no
+    #restart: unless-stopped
+    environment:
+      # Place sensitive values in a .env file next to this compose file.
+      # Use RUNNER_TOKEN (manually generated from GitHub UI) instead of ACCESS_TOKEN.
+      # ACCESS_TOKEN requires org owner permissions, which often causes 403 errors.
+      RUNNER_TOKEN: ${GH_RUNNER_TOKEN}
+      # --- Choose ONE scope below: org OR repo ---
+      # For organization-level runners (needs a GitHub organization):
+      #RUNNER_SCOPE: org
+      #ORG_NAME: Scanframe
+      # For repository-level runners:
+      RUNNER_SCOPE: repo
+      REPO_URL: https://github.com/Scanframe/sf-gitlab-devops
+      RUNNER_NAME: sf-build-01
+      RUNNER_WORKDIR: /tmp/runner/work
+      # Custom label used in workflows (runs-on: [sf-build]).
+      # Default labels (self-hosted, linux, x64) are added automatically.
+      LABELS: sf-build
+      # Ephemeral mode: automatically unregister and stop after each job.
+      EPHEMERAL: "true"
+      # Unset all config env vars after registration to prevent leaking secrets.
+      UNSET_CONFIG_VARS: "true"
+      # Disable auto-updates so the runner image version stays in control.
+      DISABLE_AUTO_UPDATE: "true"
+    security_opt:
+      - label:disable
+    volumes:
+      # Docker socket for Docker-in-Docker support (required for --privileged jobs).
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Persistent runner registration data (only needed without EPHEMERAL mode).
+      # - /runner/data:/runner/data
+      # Work directory — must be the same path on host and in container.
+      - /tmp/runner:/tmp/runner
