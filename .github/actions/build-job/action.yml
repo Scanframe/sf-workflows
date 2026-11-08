@@ -80,6 +80,10 @@ runs:
       shell: bash
       env:
         BUILD_CMD: ${{ inputs.build-cmd }}
+        # Authenticates the GitHub API calls made by the build (e.g. 'cmake/lib/bin/github-versions.py' fetching tags).
+        # Unauthenticated calls are limited to 60 per hour per IP, which a self-hosted runner exceeds easily.
+        # The image entrypoint passes the environment to the build user ('sudo -E').
+        GITHUB_TOKEN: ${{ github.token }}
       run: eval "${BUILD_CMD}"
 
     - name: Upload binaries
