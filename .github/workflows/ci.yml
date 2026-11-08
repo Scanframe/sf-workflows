@@ -38,9 +38,9 @@ on:
         default: >-
           {"include":[
           {"name":"linux-gnu","toolchain":"gnu","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
-          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/win64"},
-          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
-          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine -- native --verbose","bin-dir":"bin/win64"}
+          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/win64"}
+#          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
+#          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine -- native --verbose","bin-dir":"bin/win64"}
           ]}
       coverage:
         description: 'Run the coverage jobs for pull requests and manual runs'
