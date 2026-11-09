@@ -14,7 +14,7 @@ Docker-in-Docker support.
 
 Go to the new runner page of the repository (requires admin access to it):
 
-[https://github.com/Scanframe/sf-gitlab-devops/settings/actions/runners/new](https://github.com/Scanframe/sf-gitlab-devops/settings/actions/runners/new)
+[https://github.com/scanframe-org/sf-gitlab-devops/settings/actions/runners/new](https://github.com/scanframe-org/sf-gitlab-devops/settings/actions/runners/new)
 
 Select **Linux** → **x64**, then copy only the **registration token**: the value after `--token` in the
 `./config.sh --url ... --token XXXX` line. The token expires after 1 hour, so use it promptly.
@@ -49,7 +49,7 @@ The `docker-compose.yml` file supports two modes. Edit the file before starting 
 
 ```yaml
 RUNNER_SCOPE: repo
-REPO_URL: https://github.com/Scanframe/sf-gitlab-devops
+REPO_URL: https://github.com/scanframe-org/sf-gitlab-devops
 ```
 
 `REPO_URL` restricts the runner to that one repository.
@@ -67,7 +67,7 @@ The organization runners page is `https://github.com/organizations/<org>/setting
 
 Check the runner appears online at:
 
-`https://github.com/Scanframe/sf-gitlab-devops/settings/actions/runners`
+`https://github.com/scanframe-org/sf-gitlab-devops/settings/actions/runners`
 
 The runner `sf-build-01` should show as **Online**.
 
@@ -133,7 +133,7 @@ docker compose logs --since 1h runner
    docker compose ps
    ```
 2. **GitHub dashboard**: Check the runner appears online at:
-   `https://github.com/Scanframe/sf-gitlab-devops/settings/actions/runners`
+   `https://github.com/scanframe-org/sf-gitlab-devops/settings/actions/runners`
    The runner `sf-build-01` should show as **Online** with a green dot.
 3. **Job history**: View completed and in-progress jobs on the same page under the runner list.
 

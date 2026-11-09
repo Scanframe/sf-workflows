@@ -18,7 +18,7 @@ services:
       #ORG_NAME: Scanframe
       # For repository-level runners:
       RUNNER_SCOPE: repo
-      REPO_URL: https://github.com/Scanframe/sf-gitlab-devops
+      REPO_URL: https://github.com/scanframe-org/sf-trial-devops
       RUNNER_NAME: sf-build-01
       RUNNER_WORKDIR: /tmp/runner/work
       # Custom label used in workflows (runs-on: [sf-build]).

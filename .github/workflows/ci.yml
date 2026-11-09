@@ -143,7 +143,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Build
-        uses: Scanframe/sf-workflows/.github/actions/build-job@main
+        uses: scanframe-org/sf-workflows/.github/actions/build-job@main
         with:
           job-name: ${{ matrix.name }}
           build-cmd: ${{ matrix.build-cmd }} --workflow "${{ matrix.toolchain }}-release"
@@ -187,7 +187,7 @@ jobs:
           done
           done
       - name: Build coverage
-        uses: Scanframe/sf-workflows/.github/actions/build-job@main
+        uses: scanframe-org/sf-workflows/.github/actions/build-job@main
         with:
           job-name: linux-gcov
           build-cmd: /home/user/bin/entrypoint.sh ./build.py native --verbose --workflow "gnu-coverage"
@@ -200,7 +200,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
       - name: Publish and report coverage
-        uses: Scanframe/sf-workflows/.github/actions/coverage-report@main
+        uses: scanframe-org/sf-workflows/.github/actions/coverage-report@main
         with:
           gcovr-dir: ${{ env.SF_GCOVR_DIR }}
           exchange-dir: ${{ env.SF_EXCHANGE_DIR }}
@@ -225,7 +225,7 @@ jobs:
         with:
           submodules: recursive
       - name: Deploy
-        uses: Scanframe/sf-workflows/.github/actions/deploy-job@main
+        uses: scanframe-org/sf-workflows/.github/actions/deploy-job@main
         with:
           pkg-dir: ${{ env.SF_DIR_PKG }}
 
