@@ -21,8 +21,8 @@ services:
       # For repository-level runners:
       RUNNER_SCOPE: repo
       REPO_URL: ${GITHUB_REPO_URL}
-      RUNNER_NAME: ${GITHUB_RUNNER_NAME}${GITHUB_RUNNER_SUFFIX}
-      RUNNER_WORKDIR: /tmp/runner/work
+      RUNNER_NAME: ${GITHUB_RUNNER_NAME}${GITHUB_RUNNER_SUFFIX:-}
+      RUNNER_WORKDIR: /tmp/runner${GITHUB_RUNNER_SUFFIX:-}/work
       # Custom label used in workflows (runs-on: [sf-build]).
       # Default labels (self-hosted, linux, x64) are added automatically.
       LABELS: sf-build
@@ -46,7 +46,7 @@ services:
       # Persistent runner registration data (only needed without EPHEMERAL mode).
       #- ./runner/data:/runner/data
       # Work directory — must be the same path on host and in container.
-      - /tmp/runner:/tmp/runner
+      - /tmp/runner${GITHUB_RUNNER_SUFFIX:-}:/tmp/runner${GITHUB_RUNNER_SUFFIX:-}
       # Job-started hook script.
       - ./job-started.sh:/opt/runner-hooks/job-started.sh:ro
       # Runner externals (node20/node24) must exist on the HOST at the SAME path, because job containers

@@ -47,7 +47,7 @@ run_compose() {
 	if [[ "${flag_dry_run}" == "true" ]]; then
 		cmd+=(--dry-run)
 	fi
-	cmd+=(--file "${compose_file}" --project-name "github-runner" "$@")
+	cmd+=(--file "${compose_file}" --project-name "github-runner${GITHUB_RUNNER_SUFFIX}" "$@")
 	# Run the command.
 	run_docker "${cmd[@]}"
 }
@@ -104,7 +104,8 @@ while true; do
 			;;
 
 		-s | --suffix)
-			export GITHUB_RUNNER_SUFFIX="${2}"
+			GITHUB_RUNNER_SUFFIX="${2}"
+			export GITHUB_RUNNER_SUFFIX
 			# Assign renewed the container appended with the suffix.
 			container_name="${GITHUB_RUNNER_NAME}${2}"
 			shift 2
@@ -165,10 +166,26 @@ container_exists() {
 	[[ -n "${cid}" ]]
 }
 
+# Function to remove container if it exists
+remove_container_if_exists() {
+	if container_exists; then
+		if [[ "${flag_dry_run}" == "true" ]]; then
+			WriteLog "# Dry run: would remove container '${container_name}'."
+		else
+			docker rm -f "${container_name}" >/dev/null 2>&1 || true
+		fi
+	fi
+}
+
 # Command dispatch
 case "${subcmd}" in
 
 run)
+	if is_container_running; then
+		WriteLog "# Container '${container_name}' is already running."
+		exit 1
+	fi
+	remove_container_if_exists
 	WriteLog "# Starting GitHub Actions runner container '${container_name}' in foreground."
 	run_compose up
 	;;
@@ -177,6 +194,7 @@ start)
 	if is_container_running; then
 		WriteLog "# Container '${container_name}' is already running."
 	else
+		remove_container_if_exists
 		WriteLog "# Starting GitHub Actions runner container '${container_name}' in background."
 		run_compose up -d
 		WriteLog "# Container '${container_name}' started."
@@ -187,7 +205,13 @@ stop)
 	if is_container_running; then
 		WriteLog "# Stopping GitHub Actions runner container '${container_name}'."
 		run_compose down
+		remove_container_if_exists
 		WriteLog "# Container '${container_name}' stopped."
+	elif container_exists; then
+		WriteLog "# Removing stopped container '${container_name}'."
+		run_compose down
+		remove_container_if_exists
+		WriteLog "# Container '${container_name}' removed."
 	else
 		WriteLog "# Container '${container_name}' is not running."
 	fi

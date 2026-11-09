@@ -3,7 +3,7 @@ services:
     image: myoung34/github-runner:latest
     privileged: true
     # Give the container a name as the runner.
-    container_name: ${GITHUB_RUNNER_NAME}${GITHUB_RUNNER_SUFFIX}
+    container_name: ${GITHUB_RUNNER_NAME}${GITHUB_RUNNER_SUFFIX:-}
     # Use the network stack of the host (DNS, proxy, VPN routes) instead of a compose bridge network.
     # Only affects the runner container: job containers ('container:') are started by the host Docker daemon
     # on a network the runner creates per job.
@@ -18,13 +18,13 @@ services:
       # For organization-level runners (needs a GitHub organization):
       RUNNER_SCOPE: org
       ORG_NAME: ${GITHUB_ORG}
-      RUNNER_NAME: ${GITHUB_RUNNER_NAME}${GITHUB_RUNNER_SUFFIX}
-      RUNNER_WORKDIR: /tmp/runner/work
+      RUNNER_NAME: ${GITHUB_RUNNER_NAME}${GITHUB_RUNNER_SUFFIX:-}
+      RUNNER_WORKDIR: /tmp/runner${GITHUB_RUNNER_SUFFIX:-}/work
       # Custom label used in workflows (runs-on: [sf-build]).
       # Default labels (self-hosted, linux, x64) are added automatically.
       LABELS: sf-build
       # Ephemeral mode: automatically unregister and stop after each job.
-      EPHEMERAL: "false"
+      EPHEMERAL: "true"
       # Unset all config env vars after registration to prevent leaking secrets.
       UNSET_CONFIG_VARS: "true"
       # Disable auto-updates so the runner image version stays in control.
@@ -43,7 +43,7 @@ services:
       # Persistent runner registration data (only needed without EPHEMERAL mode).
       #- ./runner/data:/runner/data
       # Work directory — must be the same path on host and in container.
-      - /tmp/runner:/tmp/runner
+      - /tmp/runner${GITHUB_RUNNER_SUFFIX:-}:/tmp/runner${GITHUB_RUNNER_SUFFIX:-}
       # Job-started hook script.
       - ./job-started.sh:/opt/runner-hooks/job-started.sh:ro
       # Runner externals (node20/node24) must exist on the HOST at the SAME path, because job containers
