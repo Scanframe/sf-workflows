@@ -1,2 +1,5 @@
 .idea
-docker/.env
+docker/github/.env
+docker/github/
+docker/gitlab/config/config.toml
+docker/gitlab/config/.runner_system_id

@@ -43,7 +43,7 @@ The container will register itself with GitHub and start listening for jobs.
 
 ### 4. Configure the runner scope
 
-The `docker-compose-org.yml` file supports two modes. Edit the file before starting the runner:
+The `docker-compose.yml` file supports two modes. Edit the file before starting the runner:
 
 **Repository runner** (default, single repo only):
 
@@ -179,8 +179,8 @@ fresh token each time you restart the container.
 
 **For a persistent runner** (no re-registration on restart):
 
-1. Remove `EPHEMERAL: "true"` from `docker-compose-org.yml`.
-2. Uncomment the `/runner/data` volume mount in `docker-compose-org.yml`.
+1. Remove `EPHEMERAL: "true"` from `docker-compose.yml`.
+2. Uncomment the `/runner/data` volume mount in `docker-compose.yml`.
 3. The runner will persist its registration and survive restarts without needing a new token.
 
 ## Troubleshooting
