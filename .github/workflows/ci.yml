@@ -42,11 +42,6 @@ name: CI
         type: string
         required: false
         default: ''
-      coverage:
-        description: 'Run the coverage jobs for pull requests and manual runs'
-        type: boolean
-        required: false
-        default: true
     secrets:
       NEXUS_PASSWORD:
         description: "Nexus account password for uploading packages."
@@ -74,8 +69,9 @@ jobs:
   # check-env: Reports the environment and checks the code formatting.
   # ------------------------------------------------------------------
   check-env:
-    # Same as GitLab: pull requests, manual runs and pushes to protected branches only to prevent duplicate runs.
-    if: github.event_name != 'push' || github.ref_protected
+    if: github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch'
     # Anchors defined here are reused by the other jobs.
     # A 'runs-on' list needs a runner having ALL labels, it is not a fallback list.
     # Set variable SF_RUNNER_LABELS (JSON) to use the self-hosted runner, e.g. ["sf-build"]. Default: GitHub-hosted.
@@ -184,11 +180,8 @@ jobs:
   # Runs for push, pull requests, and manual dispatches; skipped otherwise.
   # ------------------------------------------------------------------
   linux-gcov:
-    if: inputs.coverage && (
-        github.event_name == 'push' ||
-        github.event_name == 'pull_request' ||
-        github.event_name == 'workflow_dispatch'
-      )
+    # Depends on the 'check-env' job so no check needed.
+    if: true
     needs: [check-env]
     runs-on: *runs-on
     timeout-minutes: *build-timeout
@@ -229,7 +222,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
-          path: ${{ env.SF_GCOVR_DIR }}/report.txt
+          path: |
+            ${{ env.SF_GCOVR_DIR }}/report.txt
+            ${{ env.SF_GCOVR_DIR }}/report.xml
           retention-days: 7
           if-no-files-found: error
       - name: Publish and report coverage
