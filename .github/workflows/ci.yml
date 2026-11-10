@@ -120,8 +120,8 @@ jobs:
     # '!cancelled()' is required: without a status function the implicit 'success()' skips this job
     # whenever linux-gcov was skipped.
     if: >-
-      ${{ !cancelled() }}
-      && ${{ !inputs.skip_build }}
+      ${{ !cancelled()
+      && !inputs.skip_build
       && needs.check-env.result == 'success'
       && (needs.linux-gcov.result == 'success' || needs.linux-gcov.result == 'skipped') }}
     runs-on: *runs-on
