@@ -1,3 +1,4 @@
+---
 # Composite action: Shared deploy job steps.
 # The repository must be checked out before using this action.
 # Used by: deploy-develop, deploy-staging, deploy-stable.

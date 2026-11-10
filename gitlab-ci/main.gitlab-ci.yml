@@ -1,3 +1,4 @@
+---
 # Variables needed for this file.
 # Commented-out values are passed from GitLab CI/CD settings.
 variables:
@@ -9,7 +10,7 @@ variables:
   # Directory for generated packages.
   SF_DIR_PKG: "bin/pkg"
   # Name of the branch that allows running deploying to production. (set from CI/CD settings)
-  #SF_RELEASE_BRANCH: "main"
+  # SF_RELEASE_BRANCH: "main"
   # Output directory used by coverage.
   SF_GCOVR_DIR: "bin/gcov"
   # Nexus exchange directory for coverage reports between a child and parent pipeline.
@@ -148,7 +149,7 @@ linux-gw:
     include:
       - project: 'library/workflows'
         ref: main
-        file : 'gitlab-ci/build-single.gitlab-ci.yml'
+        file: 'gitlab-ci/build-single.gitlab-ci.yml'
 
 linux-ga:
   stage: build

@@ -1,18 +1,19 @@
+---
 # Variables needed for this file where the commented-out values are from the parent pipeline or CI-settings.
 variables:
   # Logger tag value.
-  #SF_TARGET_ARCH: "amd64"
-  #SF_TARGET_OS: "linux"
+  # SF_TARGET_ARCH: "amd64"
+  # SF_TARGET_OS: "linux"
   # Directory for generated packages.
-  #SF_DIR_PKG: "bin/pkg"
+  # SF_DIR_PKG: "bin/pkg"
   # CMake toolchain the preset-name with.
-  #SF_TOOLCHAIN: "gnu"
+  # SF_TOOLCHAIN: "gnu"
   # CMake build type to construct the preset-name with.
-  #SF_BUILD_TYPE: "debug"
+  # SF_BUILD_TYPE: "debug"
   # Output directory relative to the working directory.
-  #SF_DIR_BIN: "bin/lnx64"
+  # SF_DIR_BIN: "bin/lnx64"
   # Name of the branch that allows running deploying to production.
-  #SF_RELEASE_BRANCH: "main"
+  # SF_RELEASE_BRANCH: "main"
   # Make Git clone the submodules as well.
   GIT_SUBMODULE_STRATEGY: recursive
 

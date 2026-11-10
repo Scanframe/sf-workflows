@@ -1,3 +1,4 @@
+---
 # GitHub Actions reusable CI pipeline (called using 'workflow_call' from the workflow of a project).
 # Equivalent of the GitLab pipeline in 'gitlab-ci/main.gitlab-ci.yml' without the testing capabilities ('SF_SIGNAL').
 #
@@ -11,13 +12,14 @@
 # Repository settings of the calling repository used:
 #   Variables (optional):
 #     SF_RELEASE_BRANCH : Name of the branch allowing deployment to 'staging' and 'stable' (default: main).
+#     SF_BUILD_MATRIX : JSON string overriding the build matrix (see 'matrix' input default for format).
 #   Secrets (repository or organization secrets, passed using 'secrets: inherit'):
 #     NEXUS_USER, NEXUS_PASSWORD, NEXUS_SERVER_URL, NEXUS_RAW_REPO, NEXUS_EXCHANGE_REPO, NEXUS_WINGET_REFRESH
 #   Environments: 'staging' and 'stable' which can override the secrets.
 
 name: CI
 
-on:
+"on":
   workflow_call:
     inputs:
       skip_build:
@@ -36,17 +38,10 @@ on:
       matrix:
         description: >-
           JSON object with an 'include' list of toolchains to build. Each entry has the keys
-          'name', 'toolchain', 'build-cmd' and 'bin-dir'.
+          'name', 'toolchain', 'build-cmd' and 'bin-dir'. Leave empty to use the default matrix.
         type: string
         required: false
-        # Disabled entries (comments are not possible inside the folded value below):
-        default: >-
-          {"include":[
-          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
-          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/win64"},
-          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
-          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine -- native --verbose","bin-dir":"bin/win64"}
-          ]}
+        default: ''
       coverage:
         description: 'Run the coverage jobs for pull requests and manual runs'
         type: boolean
@@ -129,7 +124,36 @@ jobs:
     container: *build-container
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(inputs.matrix) }}
+      # When the input 'matrix' is empty, use the default matrix.
+      matrix: >-
+        ${{ fromJSON(inputs.matrix || '{
+          "include": [
+            {
+              "name": "linux-gnu",
+              "toolchain": "gnu",
+              "build-cmd": "/home/user/bin/entrypoint.sh ./build.py native --verbose",
+              "bin-dir": "bin/lnx64"
+            },
+            {
+              "name": "linux-gw",
+              "toolchain": "gw",
+              "build-cmd": "/home/user/bin/entrypoint.sh ./build.py native --verbose",
+              "bin-dir": "bin/win64"
+            },
+            {
+              "name": "linux-ga",
+              "toolchain": "ga",
+              "build-cmd": "/home/user/bin/entrypoint.sh ./build.py native --verbose",
+              "bin-dir": "bin/lnx64"
+            },
+            {
+              "name": "wine-msvc",
+              "toolchain": "msvc",
+              "build-cmd": "/home/user/bin/entrypoint.sh ./build.py wine -- native --verbose",
+              "bin-dir": "bin/win64"
+            }
+          ]
+        }') }}
     env: &nexus-env
       DEBUG: ${{ vars.ENTRY_DEBUG }}
       NEXUS_USER: ${{ vars.NEXUS_USER }}
@@ -160,7 +184,11 @@ jobs:
   # Runs for push, pull requests, and manual dispatches; skipped otherwise.
   # ------------------------------------------------------------------
   linux-gcov:
-    if: inputs.coverage && (github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+    if: inputs.coverage && (
+        github.event_name == 'push' ||
+        github.event_name == 'pull_request' ||
+        github.event_name == 'workflow_dispatch'
+      )
     needs: [check-env]
     runs-on: *runs-on
     timeout-minutes: *build-timeout

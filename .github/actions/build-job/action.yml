@@ -1,3 +1,4 @@
+---
 # Composite action: Shared build job steps.
 # The repository must be checked out (with tags) before using this action.
 # Used by: build (matrix) and linux-gcov.

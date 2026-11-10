@@ -1,3 +1,4 @@
+---
 # Variables needed for this file.
 variables:
   # Make Git clone the submodules as well.
@@ -162,4 +163,3 @@ step-deploy-stable:
   extends:
     - .deploy
   environment: stable
-
