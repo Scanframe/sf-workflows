@@ -36,12 +36,12 @@ on:
         type: string
         required: false
         # Disabled entries (comments are not possible inside the folded value below):
+#          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/win64"},
+#          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
+#          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine -- native --verbose","bin-dir":"bin/win64"}
         default: >-
           {"include":[
-          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
-          {"name":"linux-gw","toolchain":"gw","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/win64"},
-          {"name":"linux-ga","toolchain":"ga","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"},
-          {"name":"wine-msvc","toolchain":"msvc","build-cmd":"/home/user/bin/entrypoint.sh ./build.py wine -- native --verbose","bin-dir":"bin/win64"}
+          {"name":"linux-gnu","toolchain":"gnu","build-cmd":"/home/user/bin/entrypoint.sh ./build.py native --verbose","bin-dir":"bin/lnx64"}
           ]}
       coverage:
         description: 'Run the coverage jobs for pull requests and manual runs'
@@ -97,9 +97,9 @@ jobs:
           echo "Working Directory=$(pwd)"
           echo "Environment Dump"
           printenv | sort
-      - name: List project files
-        run: |
-          ls -Rla "$(pwd)/.."
+#      - name: List project files
+#        run: |
+#          ls -Rla "$(pwd)/.."
       - name: Check code formatting
         run: |
           # Prevent error when fetching.
@@ -199,6 +199,12 @@ jobs:
           path: ${{ env.SF_GCOVR_DIR }}/report.txt
           retention-days: 7
           if-no-files-found: error
+      - name: Upload HTML as a Web Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          name: coverage-html
+          path: ${{ env.SF_GCOVR_DIR }}
+          retention-days: 7
       - name: Publish and report coverage
         uses: scanframe-org/sf-workflows/.github/actions/coverage-report@main
         with:
