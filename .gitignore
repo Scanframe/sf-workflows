@@ -1,4 +1,5 @@
 .idea
+.junie
 docker/github/.env
 docker/github/
 docker/gitlab/config/config.toml

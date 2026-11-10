@@ -16,7 +16,7 @@ The pipeline is the equivalent of the GitLab pipeline in `gitlab-ci/` without th
 |------------------|--------------------------------------------------------------------------------------|
 | `check-env`      | Prints the environment and runs `check-format.sh` when present.                      |
 | `build`          | Matrix job building and packaging every toolchain (default: gnu, gw, ga and msvc).   |
-| `linux-gcov`     | Coverage build (`gnu-coverage`) for PRs and manual runs. Publishes the report to the Nexus exchange repo, writes `report.txt` to the job summary and comments a link to the report on same-repo PRs. |
+| `linux-gcov`     | Coverage build (`gnu-coverage`) for push, PRs, and manual runs. Publishes the report to the Nexus exchange repo, writes `report.txt` to the job summary and comments a link to the report on same-repo PRs. |
 | `deploy-develop` | Automatic deploy to Nexus for every branch except the release branch.                |
 | `deploy-staging` | Manual deploy from the release branch (environment `staging`).                       |
 | `deploy-stable`  | Manual deploy from the release branch (environment `stable`).                        |
@@ -52,6 +52,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      skip_build:
+        description: 'Skip build and beyond'
+        type: boolean
+        default: false
       deploy:
         description: 'Manual deploy of the packages (only from the release branch)'
         type: choice
@@ -67,10 +71,12 @@ jobs:
     uses: <owner>/<central-repo>/.github/workflows/ci.yml@v1
     secrets: inherit
     with:
+      skip_build: ${{ github.event_name == 'push' || inputs.skip_build }}
       deploy: ${{ inputs.deploy || 'none' }}
+      docker-image: 'nexus.scanframe.com/amd64/gnu-cpp:24.04-6.12.0'
 ```
 
-The triggers, the `deploy` choice input and `concurrency` live in the caller, because only the triggers of the caller start a run.
+The triggers, the `skip_build` and `deploy` choice inputs, and `concurrency` live in the caller, because only the triggers of the caller start a run.
 
 #### 3. Optional inputs
 
@@ -78,6 +84,7 @@ All inputs have defaults reproducing the standard pipeline, so overriding them i
 
 | Input            | Type    | Default                                          | Description                                                               |
 |------------------|---------|--------------------------------------------------|---------------------------------------------------------------------------|
+| `skip_build`     | boolean | `false`                                          | When `true`, skips the build and all downstream jobs. Push events automatically set this to `true`. |
 | `deploy`         | string  | `none`                                           | `none`, `staging` or `stable`. Manual deploy from the release branch.      |
 | `docker-image`   | string  | `nexus.scanframe.com/amd64/gnu-cpp:24.04-6.12.0` | Container image the jobs run in.                                           |
 | `matrix`         | string  | gnu, gw, ga and msvc                             | JSON object with an `include` list of toolchains.                          |

@@ -20,6 +20,10 @@ name: CI
 on:
   workflow_call:
     inputs:
+      skip_build:
+        description: 'Skip build and beyond'
+        type: boolean
+        default: false
       deploy:
         description: "Manual deploy of the packages from the release branch: 'none', 'staging' or 'stable'"
         type: string
@@ -117,6 +121,7 @@ jobs:
     # whenever linux-gcov was skipped.
     if: >-
       ${{ !cancelled()
+      && ${{ !inputs.skip_build }}
       && needs.check-env.result == 'success'
       && (needs.linux-gcov.result == 'success' || needs.linux-gcov.result == 'skipped') }}
     runs-on: *runs-on
@@ -152,10 +157,10 @@ jobs:
 
   # ------------------------------------------------------------------
   # linux-gcov: Coverage build using the GNU toolchain and reports the coverage.
-  # Always runs for pull requests and manual runs otherwise it is skipped.
+  # Runs for push, pull requests, and manual dispatches; skipped otherwise.
   # ------------------------------------------------------------------
   linux-gcov:
-    if: inputs.coverage && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+    if: inputs.coverage && (github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
     needs: [check-env]
     runs-on: *runs-on
     timeout-minutes: *build-timeout
