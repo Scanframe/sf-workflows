@@ -42,6 +42,11 @@ name: CI
         type: string
         required: false
         default: ''
+      cmake-lib-branch:
+        description: 'Branch to update the cmake/lib submodule to (empty to skip)'
+        type: string
+        required: false
+        default: ''
     secrets:
       NEXUS_PASSWORD:
         description: "Nexus account password for uploading packages."
@@ -84,9 +89,9 @@ jobs:
       DEBUG: ${{ vars.ENTRY_DEBUG }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: scanframe-org/sf-workflows/.github/actions/checkout-repository@main
         with:
-          submodules: recursive
+          cmake-lib-branch: ${{ inputs.cmake-lib-branch }}
       - name: Print environment
         run: |
           echo "Working Directory=$(pwd)"
@@ -163,10 +168,10 @@ jobs:
     steps:
       # The full history and tags are needed for versioning of shared libraries and packaging.
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: scanframe-org/sf-workflows/.github/actions/checkout-repository@main
         with:
-          submodules: recursive
-          fetch-depth: 0
+          fetch-depth: '0'
+          cmake-lib-branch: ${{ inputs.cmake-lib-branch }}
       - name: Build
         uses: scanframe-org/sf-workflows/.github/actions/build-job@main
         with:
@@ -193,10 +198,10 @@ jobs:
     env: *nexus-env
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: scanframe-org/sf-workflows/.github/actions/checkout-repository@main
         with:
-          submodules: recursive
-          fetch-depth: 0
+          fetch-depth: '0'
+          cmake-lib-branch: ${{ inputs.cmake-lib-branch }}
       - name: Prepare output directories for the build user
         shell: bash
         run: |
@@ -249,9 +254,9 @@ jobs:
     env: *nexus-env
     steps: &deploy-steps
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: scanframe-org/sf-workflows/.github/actions/checkout-repository@main
         with:
-          submodules: recursive
+          cmake-lib-branch: ${{ inputs.cmake-lib-branch }}
       - name: Deploy
         uses: scanframe-org/sf-workflows/.github/actions/deploy-job@main
         with:

@@ -32,6 +32,7 @@ The pipeline relies on this contract in the calling project:
 - Optionally `check-format.sh` in the root, which is executed when it exists.
 - Git version tags, since the build runs `git describe`. The build jobs check out the full history including tags.
 - Build output in `bin/pkg` (packages) and `bin/gcov` (coverage `report.*`) and binaries in the `bin-dir` of the matrix.
+- A `cmake/lib` git submodule, only when the `cmake-lib-branch` input is used. Without it the branch update step is skipped.
 
 #### 2. Caller workflow
 
@@ -90,6 +91,7 @@ All inputs have defaults reproducing the standard pipeline, so overriding them i
 | `matrix`         | string  | gnu, gw, ga and msvc                             | JSON object with an `include` list of toolchains.                          |
 | `coverage`       | boolean | `true`                                           | Enables the `linux-gcov` job.                                              |
 | `release-branch` | string  | empty                                            | Release branch. Falls back to variable `SF_RELEASE_BRANCH`, then `main`.   |
+| `cmake-lib-branch` | string | empty                                          | Branch to update the `cmake/lib` submodule to. Empty skips the update. Intended for temporary testing. Falls back to variable `SF_CMAKE_LIB_BRANCH`. |
 
 Example overriding the matrix and disabling coverage:
 
@@ -112,7 +114,10 @@ Configure these in the calling repository or on organization level (organization
 
 - **Secrets** (passed by `secrets: inherit`): `NEXUS_USER`, `NEXUS_PASSWORD`, `NEXUS_SERVER_URL`, `NEXUS_RAW_REPO`,
   `NEXUS_EXCHANGE_REPO` and `NEXUS_WINGET_REFRESH`. All are declared optional in the workflow.
-- **Variable** (optional): `SF_RELEASE_BRANCH`, the branch allowing `staging` and `stable` deploys (default `main`).
+- **Variables** (optional):
+  - `SF_RELEASE_BRANCH`, the branch allowing `staging` and `stable` deploys (default `main`).
+  - `SF_CMAKE_LIB_BRANCH`, passed to `cmake-lib-branch` to test a `cmake/lib` branch. It applies to every run in the repository, so clear it after testing.
+  - `SF_RUNNER_LABELS`, the runner labels, see section 5.
 - **Environments**: `staging` and `stable`. Environment secrets override the repository secrets when the Nexus targets differ.
   Required reviewers on an environment give an approval step before a deploy.
 
@@ -145,11 +150,14 @@ A `uses:` path can not be dynamic, so the version is fixed in `workflows/ci.yml`
 - For breaking changes create a new major tag such as `v2` and change the `@v1` references of the actions in `workflows/ci.yml` to `@v2` in that release.
   Projects switch when they change their caller to `@v2`.
 - When testing a branch, temporarily change the action references in `workflows/ci.yml` and the caller to the branch name.
+- The `checkout-repository` action is referenced as `@main` in `workflows/ci.yml`, not `@v1`. It is kept on `@main` so that the `cmake-lib-branch` input is available before the `v1` tag is moved. Pin it to `@v1` once the tag includes it.
 
 ### Notes
 
 - This repository can not run the workflow itself without a caller. Test using a project calling it.
 - Pull requests from forks have no access to secrets. Deploys are skipped for them.
+- The `cmake-lib-branch` update requires the `cmake/lib` branch to be pushed to its remote, because `git submodule update --remote` does not fetch local-only commits.
+- The `cmake-lib-branch` update rewrites `.gitmodules` in the workspace only. The change is not committed.
 - YAML anchors in `workflows/ci.yml` only work within that file. GitHub supports anchors since September 2025,
   so older GitHub Enterprise Server versions may reject the file.
 
