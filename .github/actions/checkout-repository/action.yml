@@ -45,6 +45,7 @@ runs:
         # Make sure the 'cmake/lib' directory exists before attempting to update it.
         if [ -d "cmake/lib" ]; then
           echo "::notice::Updating 'cmake/lib' submodule to branch '${CMAKE_LIB_BRANCH}'"
+          git -C cmake/lib fetch origin
           git config -f .gitmodules submodule.cmake/lib.branch "${CMAKE_LIB_BRANCH}"
           git submodule update --init --remote -- cmake/lib
         else
