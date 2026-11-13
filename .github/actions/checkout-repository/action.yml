@@ -34,16 +34,18 @@ runs:
       env:
         CMAKE_LIB_BRANCH: ${{ inputs.cmake-lib-branch }}
       run: |
+        echo "Mark workspace as safe."
+        git config --global --add safe.directory "${GITHUB_WORKSPACE}"
         # Prevent shell injection.
-        if [[ ! "$CMAKE_LIB_BRANCH" =~ ^[A-Za-z0-9._/][A-Za-z0-9._/-]*$ ]]; then
-          echo "::error::Invalid branch name for 'cmake/lib': '$CMAKE_LIB_BRANCH'"
+        if [[ ! "${CMAKE_LIB_BRANCH}" =~ ^[A-Za-z0-9._/][A-Za-z0-9._/-]*$ ]]; then
+          echo "::error::Invalid branch name for 'cmake/lib': '${CMAKE_LIB_BRANCH}'"
           exit 1
         fi
         # Make sure the 'cmake/lib' directory exists before attempting to update it.
         if [ -d "cmake/lib" ]; then
-          echo "::notice::Updating 'cmake/lib' submodule to branch '$CMAKE_LIB_BRANCH'"
-          git config -f .gitmodules submodule.cmake/lib.branch "$CMAKE_LIB_BRANCH"
+          echo "::notice::Updating 'cmake/lib' submodule to branch '${CMAKE_LIB_BRANCH}'"
+          git config -f .gitmodules submodule.cmake/lib.branch "${CMAKE_LIB_BRANCH}"
           git submodule update --init --remote -- cmake/lib
         else
-          echo "Submodule directory 'cmake/lib' not found. Skipping update to '$CMAKE_LIB_BRANCH'."
+          echo "::notice::Submodule directory 'cmake/lib' not found. Skipping update to '${CMAKE_LIB_BRANCH}'."
         fi
