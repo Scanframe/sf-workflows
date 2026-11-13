@@ -29,7 +29,8 @@ runs:
         submodules: ${{ inputs.submodules }}
         fetch-depth: ${{ inputs.fetch-depth }}
     - name: Update 'cmake/lib' submodule
-      if: inputs.cmake-lib-branch != ''
+      # Ignore when CMAKE_LIB_BRANCH is empty or "none".
+      if: inputs.cmake-lib-branch != '' || inputs.cmake-lib-branch == 'none'
       shell: bash
       env:
         CMAKE_LIB_BRANCH: ${{ inputs.cmake-lib-branch }}
