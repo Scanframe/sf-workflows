@@ -1,7 +1,7 @@
 ---
 # Composite action: Shared deploy job steps.
 # The repository must be checked out before using this action.
-# Used by: deploy-develop, deploy-staging, deploy-stable.
+# Used by: deploy (consolidated job handling develop, staging, and stable deployments).
 # The Nexus target depends on the secrets passed as environment variables by the calling job.
 
 name: 'Deploy Job'

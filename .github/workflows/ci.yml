@@ -239,20 +239,26 @@ jobs:
           exchange-dir: ${{ env.SF_EXCHANGE_DIR }}
 
   # ------------------------------------------------------------------
-  # deploy-develop: Deploys automatically to Nexus for all but the release branch.
+  # deploy: Deploys packages to Nexus.
+  # - Automatic for non-release branches (develop).
+  # - Manual for release branch to 'staging' or 'stable' (via inputs.deploy).
   # ------------------------------------------------------------------
-  deploy-develop:
+  deploy:
     needs: [build]
     if: >-
-      github.ref_name != (vars.SF_RELEASE_BRANCH || 'main') &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      (github.ref_name != (vars.SF_RELEASE_BRANCH || 'main') &&
+       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) ||
+      (inputs.deploy != 'none' && github.ref_name == (vars.SF_RELEASE_BRANCH || 'main'))
     runs-on: *runs-on
-    timeout-minutes: &deploy-timeout 30
+    timeout-minutes: 30
     # Deploying does not need the privileged option.
     container:
       image: *build-image
+    # Dynamic environment: 'staging' or 'stable' for release branch deploys; empty for develop.
+    environment:
+      name: ${{ (inputs.deploy != 'none' && inputs.deploy) || '' }}
     env: *nexus-env
-    steps: &deploy-steps
+    steps:
       - name: Checkout repository
         uses: scanframe-org/sf-workflows/.github/actions/checkout-repository@main
         with:
@@ -261,33 +267,3 @@ jobs:
         uses: scanframe-org/sf-workflows/.github/actions/deploy-job@main
         with:
           pkg-dir: ${{ env.SF_DIR_PKG }}
-
-  # ------------------------------------------------------------------
-  # deploy-staging: Manual deploy to Nexus from the release branch.
-  # Uses the secrets of the GitHub environment 'staging'.
-  # ------------------------------------------------------------------
-  deploy-staging:
-    needs: [build]
-    if: inputs.deploy == 'staging' && github.ref_name == (vars.SF_RELEASE_BRANCH || 'main')
-    runs-on: *runs-on
-    timeout-minutes: *deploy-timeout
-    environment: staging
-    container:
-      image: *build-image
-    env: *nexus-env
-    steps: *deploy-steps
-
-  # ------------------------------------------------------------------
-  # deploy-stable: Manual deploy to Nexus from the release branch.
-  # Uses the secrets of the GitHub environment 'stable'.
-  # ------------------------------------------------------------------
-  deploy-stable:
-    needs: [build]
-    if: inputs.deploy == 'stable' && github.ref_name == (vars.SF_RELEASE_BRANCH || 'main')
-    runs-on: *runs-on
-    timeout-minutes: *deploy-timeout
-    environment: stable
-    container:
-      image: *build-image
-    env: *nexus-env
-    steps: *deploy-steps
