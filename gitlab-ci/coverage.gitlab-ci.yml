@@ -71,6 +71,24 @@ job-coverage:
   stage: coverage
   before_script:
     - 'echo "Working Directory=$(pwd)" && echo "Environment Dump" && printenv | sort'
+    - |
+      # Update cmake/lib submodule to a specific branch if SF_CMAKE_LIB_BRANCH is set.
+      if [[ -n "${SF_CMAKE_LIB_BRANCH}" ]]; then
+        # Prevent shell injection - validate branch name.
+        if [[ ! "${SF_CMAKE_LIB_BRANCH}" =~ ^[A-Za-z0-9._/][A-Za-z0-9._/-]*$ ]]; then
+          echo "Error: Invalid branch name for 'cmake/lib': '${SF_CMAKE_LIB_BRANCH}'"
+          exit 1
+        fi
+        if [ -d "cmake/lib" ]; then
+          echo "Updating 'cmake/lib' submodule to branch '${SF_CMAKE_LIB_BRANCH}'"
+          git config --global --add safe.directory '*'
+          git -C cmake/lib fetch origin "refs/heads/${SF_CMAKE_LIB_BRANCH}:refs/remotes/origin/${SF_CMAKE_LIB_BRANCH}"
+          git config -f .gitmodules submodule.cmake/lib.branch "${SF_CMAKE_LIB_BRANCH}"
+          git submodule update --init --remote -- cmake/lib
+        else
+          echo "Submodule directory 'cmake/lib' not found. Skipping update."
+        fi
+      fi
   script:
     # The make stage needs tags for versioning of shared libraries and packaging.
     - *tags-script

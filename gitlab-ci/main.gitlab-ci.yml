@@ -4,6 +4,8 @@
 variables:
   # Make Git clone the submodules as well.
   GIT_SUBMODULE_STRATEGY: recursive
+  # Branch to update the cmake/lib submodule to (empty to skip).
+  SF_CMAKE_LIB_BRANCH: ""
   # Tags for runner selection.
   SF_TARGET_ARCH: "amd64"
   SF_TARGET_OS: "linux"
