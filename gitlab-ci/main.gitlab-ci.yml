@@ -36,6 +36,12 @@ workflow:
     # Prevent a double pipeline when having this workflow.
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"'
       when: always
+    # Skip push pipeline if an open MR already exists for this branch.
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    # Allow pipelines on push to unprotected branches (e.g., feature branches).
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED != "true"'
+      when: always
     - when: never
   # Cancel when there is a new commit.
   auto_cancel:
@@ -71,6 +77,10 @@ default:
     # Run manual when triggered by web.
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
+    # Run manual for push to unprotected branches (non-MR).
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED != "true"'
+      when: manual
+      allow_failure: true
     - when: on_success
     - allow_failure: false
 
@@ -212,6 +222,10 @@ linux-gcov:
       when: never
     # Run always when triggered by a merge request event.
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: on_success
+      allow_failure: false
+    # Run automatically for push to unprotected branches.
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED != "true"'
       when: on_success
       allow_failure: false
     # By default, run manual.
